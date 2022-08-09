@@ -7,6 +7,10 @@ import streamlit as st
 import yfinance as fy
 import plotly.express as px
 
+from libraries.time_series import adf_test, kpss_test
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+
 # Basic setup configs
 plt.set_loglevel('WARNING')
 st.set_page_config(page_title="financial analysis", page_icon=":tada:", layout="centered")
@@ -85,13 +89,35 @@ with st.container():
         st.write("##")
         st.subheader("Historical Price of {}".format(", ".join(dropdown)))
         data = fy.download(dropdown, start_date, end_date)['Adj Close']
+        data.index = pd.to_datetime(data.index).strftime('%Y-%m-%d')
+
+        # Mean and standard deviation of the returns
         st.write("Mean : $ {:.2f}".format(data.mean()))
         st.write("Standard deviation : {:.2f}".format(data.std()))
+
+        # Plot the data
         fig = px.line(data, x=data.index, y="Adj Close", title="Historical Price of {}".format(", ".join(dropdown)))
         fig.update_xaxes(rangeslider_visible=True)
-        st.plotly_chart(fig)
-        # st.line_chart(data)
-        # st.write(np.std(data))
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Test for stationarity
+        st.subheader("Test for Stationarity")
+        st.write("##")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("ADF Test")
+            st.write(adf_test(data))
+        with col2:
+            st.subheader("KPSS Test")
+            st.write(kpss_test(data))
+
+        # Decomposition
+        st.subheader("Decomposition")
+        st.write("##")
+        decomp = seasonal_decompose(x=data, model='multiplicative', period=12)
+        st.write(decomp.trend)
+
 
     elif len(dropdown) > 1:
         st.write("##")
