@@ -1,5 +1,4 @@
 from statsmodels.tsa.stattools import adfuller, kpss
-import matplotlib.pyplot as plt
 import pandas as pd
 
 def adf_test(df):
